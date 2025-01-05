@@ -20,7 +20,7 @@ Lunettes-Mips is a mips disassembler for the mips instruction set, but is not fi
 
 # Installation
 
-- Download the [zip file](https://github.com/RRx1C/lunettes-mips-rs/releases)
+- Download the [zip file](https://github.com/RRx1C/lunettes-mips-rs/blob/master/lunette-mips-rs-v010.zip)
 - Unzip it with "extract here" your src folder
 - Add "mod mips;" in your
 
