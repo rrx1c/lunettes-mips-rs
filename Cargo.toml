@@ -1,0 +1,7 @@
+[package]
+name = "lunettes-mips-rs"
+version = "0.1.0"
+edition = "2021"
+authors = ["RR28 <rrx1c@jabber.fr>"]
+
+[dependencies]
