@@ -8,6 +8,10 @@ use crate::mips::operands::*;
 use crate::mips::operands::registers::*;
 use crate::mips::LmAddressSize;
 
+//#TODO: Spend more time with JR and JALR
+//#TODO: Spend more time with Break
+//#TODO: Pref has the Miscellaneous function and I don't know about cache, I guess it's the same as pref
+
 fn u32_to_register(register: u32) -> Option<LmRegisters>{
     return match register{
         0 => Some(LmRegisters::ZERO), 1 => Some(LmRegisters::AT), 2 => Some(LmRegisters::V0), 3 => Some(LmRegisters::V1), 4 => Some(LmRegisters::A0), 5 => Some(LmRegisters::A1), 6 => Some(LmRegisters::A2), 7 => Some(LmRegisters::A3),
@@ -28,11 +32,16 @@ struct LmInstructionContext{
     pub operands: Vec<LmOperand>,
     pub mnemonic_id: LmMnemonicId,
     pub coprocessor: LmCoprocessor,
+    pub to_string: fn(mnemonic_id: LmMnemonicId, operands: &Vec<LmOperand>) -> String
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct LmDisassembler{
     address_size: LmAddressSize,
+}
+
+fn no_to_string_callback(_mnemonic_id: LmMnemonicId, _operands: &Vec<LmOperand>) -> String{
+    String::from("")
 }
 
 impl LmDisassembler{
@@ -50,6 +59,7 @@ impl LmDisassembler{
         let mut context: LmInstructionContext = LmInstructionContext{
             function: LmInstructionFunction::NoFunction,
             format: LmCpuInstructionFormat::NoFormat,
+            to_string: no_to_string_callback,
             is_conditional: false,
             coprocessor: match memory >> 26{
                 0x20 => LmCoprocessor::CP0,
@@ -68,7 +78,13 @@ impl LmDisassembler{
         if !OPCODE_TABLE[(memory >> 26) as usize](&mut context){
             return None
         }
-        return match LmInstruction::new_instruction(self.address_size, context.is_conditional, context.coprocessor, address, context.operands, context.mnemonic_id, memory, context.function, context.format, context.is_relative, context.is_region){
+        if context.operands.len() == 1 {
+            context.to_string = one_operand_to_string;
+        }
+        else if context.operands.len() == 0{
+            context.to_string = no_operand_to_string;
+        }
+        return match LmInstruction::new_instruction(context.to_string, self.address_size, context.is_conditional, context.coprocessor, address, context.operands, context.mnemonic_id, memory, context.function, context.format, context.is_relative, context.is_region){
             Some(instruction) => Some(instruction),
             None => None,
         };
@@ -105,8 +121,8 @@ fn empty_opcode(_context: &mut LmInstructionContext) -> bool{
 }
 fn special_opcode_table(context: &mut LmInstructionContext) -> bool{
     static SPECIAL_TABLE: [fn(&mut LmInstructionContext) -> bool; 64] = [
-    sll,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,
-    empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,
+    sll,  empty_opcode,  empty_opcode,  sra,  sllv,  empty_opcode,  empty_opcode,  srav,
+    jr,  jalr,  movz,  movn,  syscall,  break_inst,  empty_opcode,  sync,
     empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,
     empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,
     empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,
@@ -114,7 +130,7 @@ fn special_opcode_table(context: &mut LmInstructionContext) -> bool{
     empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,
     empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode,  empty_opcode ];
 
-    SPECIAL_TABLE[(context.machine_code >> 26) as usize](context)
+    SPECIAL_TABLE[(context.machine_code & 0b11111) as usize](context)
 }
 fn regimm_opcode_table(context: &mut LmInstructionContext) -> bool{
     static REGIMM_TABLE: [fn(&mut LmInstructionContext) -> bool; 64] = [
@@ -522,5 +538,124 @@ fn sll(context: &mut LmInstructionContext) -> bool{
     context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 11 & 0b11111).unwrap(), LmCoprocessor::CPU));
     context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::CPU));
     context.operands.push(LmOperand::new_imm_opreand((context.machine_code >> 6 & 0b11111) as u64));
+    true
+}
+fn sra(context: &mut LmInstructionContext) -> bool{
+    if context.machine_code >> 21 & 0b11111 != 0{
+        return false
+    }
+    context.format = LmCpuInstructionFormat::Reg;
+    context.mnemonic_id = LmMnemonicId::SRA;
+    context.function = LmInstructionFunction::Computational;
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 11 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_imm_opreand((context.machine_code >> 6 & 0b11111) as u64));
+    true
+}
+fn sllv(context: &mut LmInstructionContext) -> bool{
+    if context.machine_code >> 6 & 0b11111 != 0{
+        return false
+    }
+    context.format = LmCpuInstructionFormat::Reg;
+    context.mnemonic_id = LmMnemonicId::SLLV;
+    context.function = LmInstructionFunction::Computational;
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 11 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 21 & 0b11111) .unwrap(), LmCoprocessor::CPU));
+    true
+}
+fn srav(context: &mut LmInstructionContext) -> bool{
+    if context.machine_code >> 6 & 0b11111 != 0{
+        return false
+    }
+    context.format = LmCpuInstructionFormat::Reg;
+    context.mnemonic_id = LmMnemonicId::SRAV;
+    context.function = LmInstructionFunction::Computational;
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 11 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 21 & 0b11111) .unwrap(), LmCoprocessor::CPU));
+    true
+}
+fn jr(context: &mut LmInstructionContext) -> bool{
+    if context.machine_code >> 11 & 0b1111111111 != 0{
+        return false
+    }
+    context.to_string = jr_jalr;
+    context.function = LmInstructionFunction::BranchJump;
+    context.format = LmCpuInstructionFormat::Reg;
+    if (context.machine_code >> 6 & 0b11111) == 0b10000{
+        context.mnemonic_id = LmMnemonicId::JRHB;
+    }
+    else{
+        context.mnemonic_id = LmMnemonicId::JR;
+    }
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 21 & 0b11111) .unwrap(), LmCoprocessor::CPU));
+    true
+}
+fn jalr(context: &mut LmInstructionContext) -> bool{
+    if context.machine_code >> 16 & 0b11111 != 0{
+        return false
+    }
+    context.to_string = jr_jalr;
+    context.function = LmInstructionFunction::BranchJump;
+    context.format = LmCpuInstructionFormat::Reg;
+    if (context.machine_code >> 6 & 0b11111) == 0b10000{
+        context.mnemonic_id = LmMnemonicId::JALRHB;
+    }
+    else{
+        context.mnemonic_id = LmMnemonicId::JALR;
+    }
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 11 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 21 & 0b11111) .unwrap(), LmCoprocessor::CPU));
+    true
+}
+fn movz(context: &mut LmInstructionContext) -> bool{
+    if context.machine_code >> 6 & 0b11111 != 0{
+        return false
+    }
+    context.function = LmInstructionFunction::Miscellaneous;
+    context.is_conditional = true;
+    context.format = LmCpuInstructionFormat::Reg;
+    context.mnemonic_id = LmMnemonicId::MOVZ;
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 11 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 21 & 0b11111) .unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    true
+}
+fn movn(context: &mut LmInstructionContext) -> bool{
+    if context.machine_code >> 6 & 0b11111 != 0{
+        return false
+    }
+    context.function = LmInstructionFunction::Miscellaneous;
+    context.is_conditional = true;
+    context.format = LmCpuInstructionFormat::Reg;
+    context.mnemonic_id = LmMnemonicId::MOVN;
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 11 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 21 & 0b11111) .unwrap(), LmCoprocessor::CPU));
+    context.operands.push(LmOperand::new_reg_opreand(u32_to_register(context.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::CPU));
+    true
+}
+fn syscall(context: &mut LmInstructionContext) -> bool{
+    context.function = LmInstructionFunction::Miscellaneous;
+    context.format = LmCpuInstructionFormat::Other;
+    context.mnemonic_id = LmMnemonicId::SYSCALL;
+    context.operands.push(LmOperand::new_imm_opreand(((context.machine_code >> 6) & 0xFFFFF) as u64));
+    true
+}
+fn break_inst(context: &mut LmInstructionContext) -> bool{
+    context.function = LmInstructionFunction::Miscellaneous;
+    context.format = LmCpuInstructionFormat::Other;
+    context.mnemonic_id = LmMnemonicId::BREAK;
+    // context.operands.push(LmOperand::new_imm_opreand(((context.machine_code >> 6) & 0xFFFFF) as u64));
+    true
+}
+fn sync(context: &mut LmInstructionContext) -> bool{
+    if (context.machine_code >> 11 & 0xffff) != 0{
+        return false
+    }
+    context.function = LmInstructionFunction::Miscellaneous;
+    context.format = LmCpuInstructionFormat::Other;
+    context.mnemonic_id = LmMnemonicId::SYNC;
+    context.operands.push(LmOperand::new_imm_opreand(((context.machine_code >> 6) & 0xFFFFF) as u64));
     true
 }

@@ -13,8 +13,9 @@ pub enum LmOperandType{
     IMM, REG
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LmOperand{
+    // str: String,
     value: u64,
     operand_type: LmOperandType,
     coprocessor: LmCoprocessor,
@@ -25,6 +26,7 @@ impl LmOperand{
     pub fn new_imm_opreand(value: u64) -> LmOperand{
         LmOperand{
             value: value,
+            // str: format!("0x{}", value),
             operand_type: LmOperandType::IMM,
             coprocessor: LmCoprocessor::NoCoprocessor,
             register: LmRegisters::ZERO
@@ -33,13 +35,14 @@ impl LmOperand{
     pub fn new_reg_opreand(register: LmRegisters, coprocessor: LmCoprocessor) -> LmOperand{
         LmOperand{
             value: 0,
+            // str: LmOperand::reg_to_string(register, coprocessor).unwrap(),
             operand_type: LmOperandType::REG,
             coprocessor: coprocessor,
             register: register
         }
     }
 
-    pub fn reg_to_string(register: LmRegisters, coprocessor: instruction::LmCoprocessor) -> Option<&'static str>{
+    pub fn reg_to_string(register: LmRegisters, coprocessor: instruction::LmCoprocessor) -> &'static str{
         static CPU_REGISTER_TABLE: [&str; 32] = [
             LM_REG_ZERO, LM_REG_AT, LM_REG_V0, LM_REG_V1, LM_REG_A0, LM_REG_A1, LM_REG_A2, LM_REG_A3,
             LM_REG_T0, LM_REG_T1, LM_REG_T2, LM_REG_T3, LM_REG_T4, LM_REG_T5, LM_REG_T6, LM_REG_T7,
@@ -60,9 +63,9 @@ impl LmOperand{
         ];
         
         return match coprocessor{
-            instruction::LmCoprocessor::CP1 => Some(FPU_REGISTER_TABLE[register as usize]),
-            instruction::LmCoprocessor::CPU => Some(CPU_REGISTER_TABLE[register as usize]),
-            _ => Some(LM_DEFAULT_REG_TABLE[register as usize]),
+            instruction::LmCoprocessor::CP1 => FPU_REGISTER_TABLE[register as usize],
+            instruction::LmCoprocessor::CPU => CPU_REGISTER_TABLE[register as usize],
+            _ => LM_DEFAULT_REG_TABLE[register as usize],
         }
     }
 
@@ -72,7 +75,7 @@ impl LmOperand{
         }
         return None
     }
-    pub fn _get_operand_type(&self) -> LmOperandType{
+    pub fn get_operand_type(&self) -> LmOperandType{
         self.operand_type
     }
     pub fn get_register(&self) -> Option<LmRegisters>{

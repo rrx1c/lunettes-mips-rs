@@ -3,6 +3,11 @@
 //Jabber: rrx1c@jabber.fr
 //Github profile: https://github.com/RRx1C
 //Link to repo: https://github.com/RRx1C/lunettes-mips-rs
+
+/*
+    On peut s'en servir en tant qu'index dans l'array qui regroupe tous les registres 
+    pour trouver le bon registre en précisant bien sûr le coprocessuer ou juste pour reconnaître un certain registre.
+*/
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum LmRegisters {
     ZERO, AT, V0, V1, A0, A1, A2, A3,

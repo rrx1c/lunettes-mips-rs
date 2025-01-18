@@ -34,12 +34,14 @@ pub enum LmMnemonicId {
     NOMNEMONIC, J, JAL, BEQ, BNE, BLEZ, BGTZ, ADDI, ADDIU, SLTI, SLTIU, ANDI,
     ORI, XORI, LUI, BEQL, BNEL, BLEZL, BGTZL, JALX, LB, LH, LWL, LW, LBU, LHU,
     LWR, SB, SH, SWL, SW, SWR, CACHE, LL, LWC1, LWC2, PREF, LDC1, LDC2, SC,
-    SWC1, SWC2, SDC1, SDC2, SLL, NOP, SSNOP, EHB
+    SWC1, SWC2, SDC1, SDC2, SLL, SRA, SLLV, SRAV, JR, JRHB, JALR, JALRHB, MOVZ, MOVN,
+    SYSCALL, BREAK, SYNC
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct LmInstruction{
     address: u64,
+    to_string_callack: fn(mnemonic_id: LmMnemonicId, operands: &Vec<LmOperand>) -> String,
     operands: Vec<LmOperand>,
     mnemonic_id: LmMnemonicId,
     function: LmInstructionFunction,
@@ -53,7 +55,7 @@ pub struct LmInstruction{
 }
 
 impl LmInstruction{
-    pub fn new_instruction(address_size: LmAddressSize, is_conditional: bool, coprocessor: LmCoprocessor, address: u64, operands: Vec<LmOperand>, mnemonic_id: LmMnemonicId, machine_code: u32, function: LmInstructionFunction, format: LmCpuInstructionFormat, relative: bool, region: bool) -> Option<LmInstruction>{
+    pub fn new_instruction(to_string: fn(mnemonic_id: LmMnemonicId, operands: &Vec<LmOperand>) -> String, address_size: LmAddressSize, is_conditional: bool, coprocessor: LmCoprocessor, address: u64, operands: Vec<LmOperand>, mnemonic_id: LmMnemonicId, machine_code: u32, function: LmInstructionFunction, format: LmCpuInstructionFormat, relative: bool, region: bool) -> Option<LmInstruction>{
         if  mnemonic_id == LmMnemonicId::NOMNEMONIC ||
             format == LmCpuInstructionFormat::NoFormat ||
             function == LmInstructionFunction::NoFunction{
@@ -63,6 +65,7 @@ impl LmInstruction{
         return Some(LmInstruction{
             // operands: operands,
             address: address,
+            to_string_callack: to_string,
             is_conditional: is_conditional,
             coprocessor: coprocessor,
             function: function,
@@ -76,19 +79,27 @@ impl LmInstruction{
         })
     }
     pub fn get_memonic(mnemonic_id: LmMnemonicId) -> &'static str{
-        static MNEMONIC_TABLE: [&str; 48] = [
+        static MNEMONIC_TABLE: [&str; 57] = [
             LM_MNE_NO_MNEMONIC, LM_MNE_J, LM_MNE_JAL, LM_MNE_BEQ, LM_MNE_BNE, LM_MNE_BLEZ, LM_MNE_BGTZ, LM_MNE_ADDI, 
             LM_MNE_ADDIU, LM_MNE_SLTI, LM_MNE_SLTIU, LM_MNE_ANDI, LM_MNE_ORI, LM_MNE_XORI, LM_MNE_LUI, LM_MNE_BEQL, 
             LM_MNE_BNEL, LM_MNE_BLEZL, LM_MNE_BGTZL, LM_MNE_JALX, LM_MNE_LB, LM_MNE_LH, LM_MNE_LWL, LM_MNE_LW, 
             LM_MNE_LBU, LM_MNE_LHU, LM_MNE_LWR, LM_MNE_SB, LM_MNE_SH, LM_MNE_SWL, LM_MNE_SW, LM_MNE_SWR, 
             LM_MNE_CACHE, LM_MNE_LL, LM_MNE_LWC1, LM_MNE_LWC2, LM_MNE_PREF, LM_MNE_LDC1, LM_MNE_LDC2, LM_MNE_SC, 
-            LM_MNE_SWC1, LM_MNE_SWC2, LM_MNE_SDC1, LM_MNE_SDC2, LM_MNE_SLL, LM_MNE_NOP, LM_MNE_SSNOP,LM_MNE_EHB
+            LM_MNE_SWC1, LM_MNE_SWC2, LM_MNE_SDC1, LM_MNE_SDC2, LM_MNE_SLL, LM_MNE_SRA, LM_MNE_SLLV,LM_MNE_SRAV,
+            LM_MNE_JR, LM_MNE_JRHB, LM_MNE_JALR, LM_MNE_JALRHB, LM_MNE_MOVZ, LM_MNE_MOVN, LM_MNE_SYSCALL, LM_MNE_BREAK,
+            LM_MNE_SYNC
         ];
         MNEMONIC_TABLE[mnemonic_id as usize]
     }
 
+    pub fn get_mnemonicid(&self) -> LmMnemonicId{
+        self.mnemonic_id
+    }
     pub fn _get_opcode(&self) -> u8{
         (self.machine_code >> 26) as u8
+    }
+    pub fn temp_to_string(&self) -> String{
+        (self.to_string_callack)(self.mnemonic_id, &self.operands)
     }
     pub fn to_string(&self) -> String{
         match self.format {
@@ -100,27 +111,27 @@ impl LmInstruction{
                 let rt: &str;
 
                 match self.function {
-                    LmInstructionFunction::LoadStore =>{                       //Je dois prendre en compte cache et pref
+                    LmInstructionFunction::LoadStore =>{
                         if self.mnemonic_id == LmMnemonicId::CACHE || self.mnemonic_id == LmMnemonicId::PREF  {
-                            return format!("{} {}, {}({})", LmInstruction::get_memonic(self.mnemonic_id), self.operands[0].imm_to_string().unwrap(), self.operands[2].imm_to_string().unwrap(), LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), LmCoprocessor::CPU).unwrap())
+                            return format!("{} {}, {}({})", LmInstruction::get_memonic(self.mnemonic_id), self.operands[0].imm_to_string().unwrap(), self.operands[2].imm_to_string().unwrap(), LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), LmCoprocessor::CPU))
                         }
-                        return format!("{} {}, {}({})", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), self.operands[0].get_coprocessor()).unwrap(), self.operands[2].imm_to_string().unwrap(), LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), LmCoprocessor::CPU).unwrap())
+                        return format!("{} {}, {}({})", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), self.operands[0].get_coprocessor()), self.operands[2].imm_to_string().unwrap(), LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), LmCoprocessor::CPU))
                     }
                     LmInstructionFunction::BranchJump =>{
                         if self.operands.len() == 2{
-                            return format!("{} {}, {}", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), LmCoprocessor::CPU).unwrap(), self.operands[1].imm_to_string().unwrap())
+                            return format!("{} {}, {}", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), LmCoprocessor::CPU), self.operands[1].imm_to_string().unwrap())
                         }
-                        rt = LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), LmCoprocessor::CPU).unwrap();
-                        base = LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), LmCoprocessor::CPU).unwrap();
+                        rt = LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), LmCoprocessor::CPU);
+                        base = LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), LmCoprocessor::CPU);
                         return format!("{} {}, {}, {}", LmInstruction::get_memonic(self.mnemonic_id), base, rt, self.operands[2].imm_to_string().unwrap())
                     }
                     _ => {
                         if self.operands.len() == 2{
-                            return format!("{} {}, {}", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), LmCoprocessor::CPU).unwrap(), self.operands[1].imm_to_string().unwrap());
+                            return format!("{} {}, {}", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), LmCoprocessor::CPU), self.operands[1].imm_to_string().unwrap());
                         }
 
-                        base = LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), LmCoprocessor::CPU).unwrap();
-                        rt = LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), LmCoprocessor::CPU).unwrap();
+                        base = LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), LmCoprocessor::CPU);
+                        rt = LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), LmCoprocessor::CPU);
 
                         return format!("{} {}, {}, {}", LmInstruction::get_memonic(self.mnemonic_id), rt, base, self.operands[2].imm_to_string().unwrap());
                     }
@@ -131,11 +142,11 @@ impl LmInstruction{
                     return format!("{}", LmInstruction::get_memonic(self.mnemonic_id));
                 }
                 else{
-                    if self.operands[2]._get_operand_type() == LmOperandType::IMM{
-                        return format!("{}, {}, {}, {}", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), self.operands[0].get_coprocessor()).unwrap(), LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), self.operands[1].get_coprocessor()).unwrap(), self.operands[2].imm_to_string().unwrap())
+                    if self.operands[2].get_operand_type() == LmOperandType::IMM{
+                        return format!("{} {}, {}, {}", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), self.operands[0].get_coprocessor()), LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), self.operands[1].get_coprocessor()), self.operands[2].imm_to_string().unwrap())
                     }
                     else{
-                        return format!("{}, {}, {}, {}", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), self.operands[0].get_coprocessor()).unwrap(), LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), self.operands[1].get_coprocessor()).unwrap(), LmOperand::reg_to_string(self.operands[2].get_register().unwrap(), self.operands[2].get_coprocessor()).unwrap())
+                        return format!("{} {}, {}, {}", LmInstruction::get_memonic(self.mnemonic_id), LmOperand::reg_to_string(self.operands[0].get_register().unwrap(), self.operands[0].get_coprocessor()), LmOperand::reg_to_string(self.operands[1].get_register().unwrap(), self.operands[1].get_coprocessor()), LmOperand::reg_to_string(self.operands[2].get_register().unwrap(), self.operands[2].get_coprocessor()))
                     }
                 }
             },
@@ -201,6 +212,26 @@ impl LmInstruction{
     }
 }
 
+pub fn jr_jalr(mnemonic_id: LmMnemonicId, operands: &Vec<LmOperand>) ->String{
+    if operands.len() == 1{
+        return format!("{} {}", LmInstruction::get_memonic(mnemonic_id), LmOperand::reg_to_string(operands[0].get_register().unwrap(), operands[0].get_coprocessor()))
+    }
+    else{
+        return format!("{} {}, {}", LmInstruction::get_memonic(mnemonic_id), LmOperand::reg_to_string(operands[0].get_register().unwrap(), operands[0].get_coprocessor()), LmOperand::reg_to_string(operands[1].get_register().unwrap(), operands[1].get_coprocessor()))
+    }
+}
+pub fn one_operand_to_string(mnemonic_id: LmMnemonicId, operands: &Vec<LmOperand>) ->String{
+    if operands[0].get_operand_type() == LmOperandType::REG{
+        return format!("{} {}", LmInstruction::get_memonic(mnemonic_id), LmOperand::reg_to_string(operands[0].get_register().unwrap(), operands[0].get_coprocessor()))
+    }
+    else{
+        return format!("{} {}", LmInstruction::get_memonic(mnemonic_id), operands[0].imm_to_string().unwrap())
+    }
+}
+pub fn no_operand_to_string(mnemonic_id: LmMnemonicId, _operands: &Vec<LmOperand>) ->String{
+    return format!("{}", LmInstruction::get_memonic(mnemonic_id))
+}
+
 pub const LM_MNE_NO_MNEMONIC: &str = "error"; pub const LM_MNE_J: &str = "j"; pub const LM_MNE_JAL: &str = "jal";
 pub const LM_MNE_BEQ: &str = "beq"; pub const LM_MNE_BNE: &str = "bne"; pub const LM_MNE_BLEZ: &str = "blez";
 pub const LM_MNE_BGTZ: &str = "bgtz"; pub const LM_MNE_ADDI: &str = "addi"; pub const LM_MNE_ADDIU: &str = "addiu";
@@ -216,4 +247,7 @@ pub const LM_MNE_LL: &str = "ll"; pub const LM_MNE_LWC1: &str = "lwc1"; pub cons
 pub const LM_MNE_PREF: &str = "pref"; pub const LM_MNE_LDC1: &str = "ldc1"; pub const LM_MNE_LDC2: &str = "ldc2";
 pub const LM_MNE_SC: &str = "sc"; pub const LM_MNE_SWC1: &str = "swc1"; pub const LM_MNE_SWC2: &str = "swc2";
 pub const LM_MNE_SDC1: &str = "sdc1"; pub const LM_MNE_SDC2: &str = "sdc2"; pub const LM_MNE_SLL: &str = "sll";
-pub const LM_MNE_NOP: &str = "nop"; pub const LM_MNE_SSNOP: &str = "ssnop"; pub const LM_MNE_EHB: &str = "ehb";
+pub const LM_MNE_SRA: &str = "sra"; pub const LM_MNE_SLLV: &str = "sllv"; pub const LM_MNE_SRAV: &str = "srav";
+pub const LM_MNE_JR: &str = "jr"; pub const LM_MNE_JRHB: &str = "jr.hb"; pub const LM_MNE_JALR: &str = "jalr"; 
+pub const LM_MNE_JALRHB: &str = "jalr.hb"; pub const LM_MNE_MOVZ: &str = "movz"; pub const LM_MNE_MOVN: &str = "movn";
+pub const LM_MNE_SYSCALL: &str = "syscall"; pub const LM_MNE_BREAK: &str = "break"; pub const LM_MNE_SYNC: &str = "syn";

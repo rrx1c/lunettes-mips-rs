@@ -28,5 +28,5 @@ Je n'accepte pas de contribution pour le moment mais peut-être dans le futur, m
 
 # Goals
 
-- [ ] Make the library cross platform
+- [x] Make the library cross platform
 - [ ] Make it third party lib independant
