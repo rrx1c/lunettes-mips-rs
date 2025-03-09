@@ -3,46 +3,51 @@
 //Jabber: rrx1c@jabber.fr
 //Github profile: https://github.com/RRx1C
 //Link to repo: https://github.com/RRx1C/lunettes-mips-rs
+
 pub mod registers;
-use crate::mips::instruction::LmCoprocessor;
-use crate::mips::operands::registers::*;
-use crate::mips::instruction;
+use crate::lm_mips::instruction::LmCoprocessor;
+use crate::lm_mips::operands::registers::*;
+use crate::lm_mips::instruction;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum LmOperandType{
-    IMM, REG
+    NoType, Imm, Reg
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Copy)]
 pub struct LmOperand{
-    // str: String,
-    value: u64,
+    pub value: u64,
     operand_type: LmOperandType,
     coprocessor: LmCoprocessor,
     register: LmRegisters,
 }
 
 impl LmOperand{
+    pub fn empty_operand() ->LmOperand{
+        LmOperand{
+            value: 0,
+            operand_type: LmOperandType::NoType,
+            coprocessor: LmCoprocessor::NoCoprocessor,
+            register: LmRegisters::Zero
+        }
+    }
     pub fn new_imm_opreand(value: u64) -> LmOperand{
         LmOperand{
             value: value,
-            // str: format!("0x{}", value),
-            operand_type: LmOperandType::IMM,
+            operand_type: LmOperandType::Imm,
             coprocessor: LmCoprocessor::NoCoprocessor,
-            register: LmRegisters::ZERO
+            register: LmRegisters::Zero
         }
     }
     pub fn new_reg_opreand(register: LmRegisters, coprocessor: LmCoprocessor) -> LmOperand{
         LmOperand{
             value: 0,
-            // str: LmOperand::reg_to_string(register, coprocessor).unwrap(),
-            operand_type: LmOperandType::REG,
+            operand_type: LmOperandType::Reg,
             coprocessor: coprocessor,
             register: register
         }
     }
-
-    pub fn reg_to_string(register: LmRegisters, coprocessor: instruction::LmCoprocessor) -> &'static str{
+    pub fn _reg_to_string(register: LmRegisters, coprocessor: instruction::LmCoprocessor) -> &'static str{
         static CPU_REGISTER_TABLE: [&str; 32] = [
             LM_REG_ZERO, LM_REG_AT, LM_REG_V0, LM_REG_V1, LM_REG_A0, LM_REG_A1, LM_REG_A2, LM_REG_A3,
             LM_REG_T0, LM_REG_T1, LM_REG_T2, LM_REG_T3, LM_REG_T4, LM_REG_T5, LM_REG_T6, LM_REG_T7,
@@ -63,28 +68,22 @@ impl LmOperand{
         ];
         
         return match coprocessor{
-            instruction::LmCoprocessor::CP1 => FPU_REGISTER_TABLE[register as usize],
-            instruction::LmCoprocessor::CPU => CPU_REGISTER_TABLE[register as usize],
+            instruction::LmCoprocessor::Cp1 => FPU_REGISTER_TABLE[register as usize],
+            instruction::LmCoprocessor::Cpu => CPU_REGISTER_TABLE[register as usize],
             _ => LM_DEFAULT_REG_TABLE[register as usize],
         }
     }
 
-    pub fn imm_to_string(&self) -> Option<String>{
-        if self.operand_type != LmOperandType::REG{
-            return Some(format!("0x{:x}", self.value))
-        }
-        return None
-    }
-    pub fn get_operand_type(&self) -> LmOperandType{
+    pub fn _get_operand_type(&self) -> LmOperandType{
         self.operand_type
     }
-    pub fn get_register(&self) -> Option<LmRegisters>{
-        if self.operand_type != LmOperandType::REG{
+    pub fn _get_register(&self) -> Option<LmRegisters>{
+        if self.operand_type != LmOperandType::Reg{
             return None
         }
         Some(self.register)
     }
-    pub fn get_coprocessor(&self) -> LmCoprocessor{
+    pub fn _get_coprocessor(&self) -> LmCoprocessor{
         self.coprocessor
     }
 }

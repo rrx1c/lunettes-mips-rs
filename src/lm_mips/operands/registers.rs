@@ -4,16 +4,15 @@
 //Github profile: https://github.com/RRx1C
 //Link to repo: https://github.com/RRx1C/lunettes-mips-rs
 
-/*
-    On peut s'en servir en tant qu'index dans l'array qui regroupe tous les registres 
-    pour trouver le bon registre en précisant bien sûr le coprocessuer ou juste pour reconnaître un certain registre.
-*/
+//On peut s'en servir en tant qu'index dans l'array qui regroupe tous les registres
+//pour trouver le bon registre en précisant bien sûr le coprocessuer ou juste pour reconnaître un certain registre.
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum LmRegisters {
-    ZERO, AT, V0, V1, A0, A1, A2, A3,
+    Zero, At, V0, V1, A0, A1, A2, A3,
     T0, T1, T2, T3, T4, T5, T6, T7,
     S0, S1, S2, S3, S4, S5, S6, S7,
-    T8, T9, K0, K1, GP, SP, FP, RA,
+    T8, T9, K0, K1, Gp, Sp, Fp, Ra,
 }
 
 pub const LM_REG_ZERO: &str = "$zero"; pub const LM_REG_AT: &str = "$at"; pub const LM_REG_V0: &str = "$v0";
