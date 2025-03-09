@@ -3,9 +3,10 @@ use crate::lm_mips::instruction::*;
 use crate::lm_mips::operands::*;
 use crate::lm_mips::disassembler::*;
 
-//#TODO: Spend more time with JR and JALR
-//#TODO: Spend more time with Break
-//#TODO: Pref has the Miscellaneous function and I don't know about cache, I guess it's the same as pref
+//TODO: Spend more time with JR and JALR
+//TODO: Spend more time with Break
+//TODO: Pref has the Miscellaneous function and I don't know about cache, I guess it's the same as pref
+//TODO: Ya rien qui va
 
 pub fn j(instruction: &mut LmInstruction) -> bool{
     instruction.mnemonic_id = LmMnemonicId::J;
