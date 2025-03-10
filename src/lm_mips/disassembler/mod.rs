@@ -108,16 +108,6 @@ impl LmDisassembler{
             }
         }
     }
-    fn _imm_branch_str_formatting(instruction: &mut LmInstruction){
-        let mut hex_num: LmString = LmString::new_lmstring();
-
-        //Formatting the string
-        hex_num.num_to_str(instruction.operand[2].value);
-        instruction.string.append_str(LmInstruction::get_memonic(instruction.mnemonic_id));
-        instruction.string.append_char(' ');
-        instruction.string.append_str(LmInstruction::get_memonic(instruction.mnemonic_id));
-        instruction.string.append_string(&hex_num);
-    }
     fn jump_format(instruction: &mut LmInstruction) -> (){
         let mut hex_num: LmString = LmString::new_lmstring();
 
@@ -134,6 +124,8 @@ impl LmDisassembler{
         instruction.string.append_char(' ');
         instruction.string.append_string(&hex_num);
 
+        assert!(instruction.operand[0].value != 0);
+        assert_eq!(instruction.operand_num, 1);
         return;
     }
     pub fn u32_to_register(register: u32) -> Option<LmRegisters>{

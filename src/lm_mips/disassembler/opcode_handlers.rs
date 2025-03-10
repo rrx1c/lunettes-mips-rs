@@ -20,27 +20,19 @@ pub fn jal(instruction: &mut LmInstruction) -> bool{
 }
 pub fn beq(instruction: &mut LmInstruction) -> bool{
     instruction.mnemonic_id = LmMnemonicId::Beq;
-    instruction.format = LmInstructionFormat::Imm;
     instruction.function = LmInstructionFunction::BranchJump;
     instruction.is_relative = true;
     instruction.is_conditional = true;
 
-    instruction.operand[0] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 21 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[1] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[2] = LmOperand::new_imm_opreand((instruction.machine_code & 0xffff) as u64);
-
-
+    LmDisassembler::imm_format(instruction, LmCoprocessor::Cpu, 0, 1, 2);
     true
 }
 pub fn bne(instruction: &mut LmInstruction) -> bool{
     instruction.mnemonic_id = LmMnemonicId::Bne;
     instruction.is_conditional = true;
     instruction.is_relative = true;
-    instruction.format = LmInstructionFormat::Imm;
     instruction.function = LmInstructionFunction::BranchJump;
-    instruction.operand[0] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 21 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[1] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[2] = LmOperand::new_imm_opreand((instruction.machine_code & 0xffff) as u64);
+    LmDisassembler::imm_format(instruction, LmCoprocessor::Cpu, 0, 1, 2);
     true
 }
 pub fn blez(instruction: &mut LmInstruction) -> bool{
@@ -49,11 +41,9 @@ pub fn blez(instruction: &mut LmInstruction) -> bool{
     }
     instruction.is_relative = true;
     instruction.mnemonic_id = LmMnemonicId::Blez;
-    instruction.format = LmInstructionFormat::Imm;
     instruction.is_conditional = true;
     instruction.function = LmInstructionFunction::BranchJump;
-    instruction.operand[0] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 21 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[1] = LmOperand::new_imm_opreand((instruction.machine_code & 0xffff) as u64);
+    LmDisassembler::imm_format(instruction, LmCoprocessor::Cpu, 0, 4, 1);
     true
 }
 pub fn bgtz(instruction: &mut LmInstruction) -> bool{
@@ -121,24 +111,18 @@ pub fn lui(instruction: &mut LmInstruction) -> bool{
 }
 pub fn beql(instruction: &mut LmInstruction) -> bool{
     instruction.mnemonic_id = LmMnemonicId::Beql;
-    instruction.format = LmInstructionFormat::Imm;
     instruction.is_relative = true;
     instruction.function = LmInstructionFunction::BranchJump;
     instruction.is_conditional = true;
-    instruction.operand[0] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 21 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[1] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[2] = LmOperand::new_imm_opreand((instruction.machine_code & 0xffff) as u64);
+    LmDisassembler::imm_format(instruction, LmCoprocessor::Cpu, 0, 1, 2);
     true
 }
 pub fn bnel(instruction: &mut LmInstruction) -> bool{
     instruction.mnemonic_id = LmMnemonicId::Bnel;
-    instruction.format = LmInstructionFormat::Imm;
     instruction.function = LmInstructionFunction::BranchJump;
     instruction.is_conditional = true;
     instruction.is_relative = true;
-    instruction.operand[0] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 21 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[1] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 16 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[2] = LmOperand::new_imm_opreand((instruction.machine_code & 0xffff) as u64);
+    LmDisassembler::imm_format(instruction, LmCoprocessor::Cpu, 0, 1, 2);
     true
 }
 pub fn blezl(instruction: &mut LmInstruction) -> bool{
@@ -147,11 +131,9 @@ pub fn blezl(instruction: &mut LmInstruction) -> bool{
     }
     instruction.is_relative = true;
     instruction.mnemonic_id = LmMnemonicId::Blezl;
-    instruction.format = LmInstructionFormat::Imm;
     instruction.function = LmInstructionFunction::BranchJump;
     instruction.is_conditional = true;
-    instruction.operand[0] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 21 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[1] = LmOperand::new_imm_opreand((instruction.machine_code & 0xffff) as u64);
+    LmDisassembler::imm_format(instruction, LmCoprocessor::Cpu, 0, 4, 1);
     true
 }
 pub fn bgtzl(instruction: &mut LmInstruction) -> bool{
@@ -160,11 +142,9 @@ pub fn bgtzl(instruction: &mut LmInstruction) -> bool{
     }
     instruction.is_relative = true;
     instruction.mnemonic_id = LmMnemonicId::Bgtzl;
-    instruction.format = LmInstructionFormat::Imm;
     instruction.function = LmInstructionFunction::BranchJump;
     instruction.is_conditional = true;
-    instruction.operand[0] = LmOperand::new_reg_opreand(LmDisassembler::u32_to_register(instruction.machine_code >> 21 & 0b11111).unwrap(), LmCoprocessor::Cpu);
-    instruction.operand[1] = LmOperand::new_imm_opreand((instruction.machine_code & 0xffff) as u64);
+    LmDisassembler::imm_format(instruction, LmCoprocessor::Cpu, 0, 4, 1);
     true
 }
 pub fn jalx(instruction: &mut LmInstruction) -> bool{

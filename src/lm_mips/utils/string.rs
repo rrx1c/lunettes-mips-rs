@@ -44,7 +44,7 @@ impl LmString{
         if self.capacity - self.size < src.len(){
             return false
         }
-        for i in 0..self.size{
+        for i in 0..src.size{
             self.buffer[self.size] = src.buffer[i];
             self.size += 1;
         }
@@ -54,8 +54,7 @@ impl LmString{
         return &self.buffer;
     }
     pub fn num_to_str(&mut self, mut num: u64) -> (){
-        let digit_num: usize;
-        let mut i: usize;
+        let mut digit_num: usize;
         
         self.buffer[0] = '0';
         self.buffer[1] = 'x';
@@ -73,14 +72,18 @@ impl LmString{
             digit_num = 16;
         }
     
-        i = digit_num;
-        while i > 0{
+        self.size = digit_num + 2;
+        while digit_num > 0{
             match num & 0xf{
-                0..=9 => self.buffer[i + 1] = ((num & 0xf) + 0x30) as u8 as char,
-                _ => self.buffer[i + 1] = ((num & 0xf) + 0x57) as u8 as char
+                0..=9 => {
+                    let test = ((num & 0xf) + 0x30) as u8;
+                    self.buffer[digit_num + 1] = test as char},
+                _ => {
+                    let test = ((num & 0xf) + 0x57) as u8;
+                    self.buffer[digit_num + 1] = test as char}
             }
             num >>= 4;
-            i-=1;
+            digit_num -=1;
         }
     }    
 }
