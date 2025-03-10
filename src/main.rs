@@ -4,8 +4,8 @@
 //Github profile: https://github.com/RRx1C
 //Link to repo: https://github.com/RRx1C/lunettes-mips-rs
 
-mod mips;
-use mips::disassembler::*;
+mod lm_mips;
+use lm_mips::disassembler::LmDisassembler;
 
 fn main() {
     let mut str: String;
@@ -19,17 +19,16 @@ fn main() {
         0xE6A20160, 0xEAC50170, 0xF6E20180, 0xF9060190, 0x000A4900, 0x000C5943, 0x1EE68040, 0x99C00703,
         0xE0000800, 0x00000000, 0x1CF680B0, 0x0000000C, 0x0000000D, 0x0000000F];
 
-    let disassembler: LmDisassembler = new_disassembler(mips::LmAddressSize::Lm32bits);
+    let disassembler: LmDisassembler = LmDisassembler::new_disassembler(lm_mips::LmAddressSize::Lm32bits);
 
     for i in 0..machine_codes.len(){
         match disassembler.disassemble(machine_codes[i], (0x00400000 + i * 4) as u64){
             Some(instruction) => {
-                str = String::from_iter(&instruction.string);
+                str = String::from_iter(instruction.string.data());
                 let instruction_machine_code = machine_codes[i].to_le_bytes();
-                print!("0x{:08x} {:02x} {:02x} {:02x} {:02x} {}", instruction.address, 
+                println!("0x{:08x} {:02x} {:02x} {:02x} {:02x} {}", instruction.address, 
                     instruction_machine_code[0], instruction_machine_code[1], instruction_machine_code[2], instruction_machine_code[3],
                     str);
-                
             },
             None => eprintln!("Instruction is probably not implemented yet or something went wrong"),
         };
