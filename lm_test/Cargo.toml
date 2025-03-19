@@ -1,0 +1,10 @@
+[package]
+name = "lm_test"
+version = "0.1.0"
+edition = "2021"
+authors = ["RR28 <@rrx1c>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lunettes_mips_rs = {path = ".."}

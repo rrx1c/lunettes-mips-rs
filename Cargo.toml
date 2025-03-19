@@ -1,5 +1,6 @@
+workspace = { members = ["lm_test"] }
 [package]
-name = "lunettes-mips-rs"
+name = "lunettes_mips_rs"
 version = "0.1.0"
 edition = "2021"
 authors = ["RR28 <rrx1c@jabber.fr>"]

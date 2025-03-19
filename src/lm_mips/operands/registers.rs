@@ -7,14 +7,6 @@
 //On peut s'en servir en tant qu'index dans l'array qui regroupe tous les registres
 //pour trouver le bon registre en précisant bien sûr le coprocessuer ou juste pour reconnaître un certain registre.
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum LmRegisters {
-    Zero, At, V0, V1, A0, A1, A2, A3,
-    T0, T1, T2, T3, T4, T5, T6, T7,
-    S0, S1, S2, S3, S4, S5, S6, S7,
-    T8, T9, K0, K1, Gp, Sp, Fp, Ra,
-}
-
 pub const LM_REG_ZERO: &str = "$zero"; pub const LM_REG_AT: &str = "$at"; pub const LM_REG_V0: &str = "$v0";
 pub const LM_REG_V1: &str = "$v1"; pub const LM_REG_A0: &str = "$a0"; pub const LM_REG_A1: &str = "$a1";
 pub const LM_REG_A2: &str = "$a2"; pub const LM_REG_A3: &str = "$a3"; pub const LM_REG_T0: &str = "$t0";
@@ -47,3 +39,7 @@ pub const LM_REG_20: &str = "$20"; pub const LM_REG_21: &str = "$21"; pub const 
 pub const LM_REG_23: &str = "$23"; pub const LM_REG_24: &str = "$24"; pub const LM_REG_25: &str = "$25";
 pub const LM_REG_26: &str = "$26"; pub const LM_REG_27: &str = "$27"; pub const LM_REG_28: &str = "$28";
 pub const LM_REG_29: &str = "$29"; pub const LM_REG_30: &str = "$30"; pub const LM_REG_31: &str = "$31";
+
+pub const LM_REG_FCC0: &str = "$fcc0"; pub const LM_REG_FCC1: &str = "$fcc1"; pub const LM_REG_FCC2: &str = "$fcc2";
+pub const LM_REG_FCC3: &str = "$fcc3"; pub const LM_REG_FCC4: &str = "$fcc4"; pub const LM_REG_FCC5: &str = "$fcc5";
+pub const LM_REG_FCC6: &str = "$fcc6"; pub const LM_REG_FCC7: &str = "$fcc7";

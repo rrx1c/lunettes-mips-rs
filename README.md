@@ -23,21 +23,9 @@ Je n'accepte pas de contribution pour le moment mais peut-être dans le futur, m
 - [x] Aucune dépendance
 - [x] Pas d'allocation de mémoire enfin je crois
 - [x] Thread safe(qu'un thread n'est utilisé)
+- [x] No unsafe
 - [ ] Rapide????
 - [ ] Lisible T_T
-# Installation
-
-1. Avec le code source
-
-	- Télécharger le [fichier zip](https://github.com/RRx1C/lunettes-mips-rs/blob/master/lunette-mips-rs-v010.zip)
-	- L'extraire dans le src folder de votre projet
-	- Ajouter "mod lm_mips;" dans votre code
-
-2. Avec une librairie précompilé
-	- A venir
-
-3. Avec une librairie dynamique
-	- A venir
 # Inspiration
 
 - [Zydis](https://github.com/zyantific/zydis)
@@ -45,7 +33,6 @@ Je n'accepte pas de contribution pour le moment mais peut-être dans le futur, m
 # Aides
 
 - [Online assembler/disassembler](https://yozan233.github.io/Online-Assembler-Disassembler/)
-1. Manuel Volume 1
-	- https://riteme.site/nscscc/doc/mips/Volume%20I:%20Introduction%20to%20MIPS32%20Architecture.pdf
-2. Manuel Volume 2
-	- https://riteme.site/nscscc/doc/mips/Volume%20II:%20MIPS32%20Instruction%20Set.pdf
+1. [Manuel Volume 1](https://riteme.site/nscscc/doc/mips/Volume%20I:%20Introduction%20to%20MIPS32%20Architecture.pdf)
+2. [Manuel Volume 2](https://riteme.site/nscscc/doc/mips/Volume%20II:%20MIPS32%20Instruction%20Set.pdf)
+3. [Manuel Volume 3](https://s3-eu-west-1.amazonaws.com/downloads-mips/documents/MD00090-2B-MIPS32PRA-AFP-06.02.pdf)

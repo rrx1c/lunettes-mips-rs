@@ -7,6 +7,7 @@
 pub mod instruction;
 pub mod disassembler;
 pub mod operands;
+pub mod error;
 mod utils;
 
 #[derive(Debug, Copy, Clone, PartialEq)]

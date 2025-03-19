@@ -5,49 +5,53 @@
 //Link to repo: https://github.com/RRx1C/lunettes-mips-rs
 
 pub mod registers;
-use crate::lm_mips::instruction::LmCoprocessor;
-use crate::lm_mips::operands::registers::*;
-use crate::lm_mips::instruction;
+use super::instruction::LmCoprocessor;
+use super::operands::registers::*;
+use super::instruction;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum LmOperandType{
-    NoType, Imm, Reg
+    Imm, Reg
 }
 
 #[derive(Clone, Debug, PartialEq, Copy)]
-pub struct LmOperand{
+pub struct LmOpRegister{
+    pub register: &'static str,
+    pub coprocessor: LmCoprocessor,
+}
+#[derive(Clone, Debug, PartialEq, Copy)]
+pub struct LmOpImmediate{
     pub value: u64,
-    operand_type: LmOperandType,
-    coprocessor: LmCoprocessor,
-    register: LmRegisters,
 }
 
-impl LmOperand{
-    pub fn empty_operand() ->LmOperand{
-        LmOperand{
-            value: 0,
-            operand_type: LmOperandType::NoType,
-            coprocessor: LmCoprocessor::NoCoprocessor,
-            register: LmRegisters::Zero
-        }
+#[derive(Clone, Debug, PartialEq, Copy)]
+pub enum LmOperand{
+    LmOpRegister(LmOpRegister), LmOpImmediate(LmOpImmediate)
+}
+trait _LmOpType{
+    fn get_operand_type() -> LmOperandType;
+}
+
+impl _LmOpType for LmOpImmediate{
+    fn get_operand_type() -> LmOperandType{
+        LmOperandType::Imm
     }
+}
+impl _LmOpType for LmOpRegister{
+    fn get_operand_type() -> LmOperandType{
+        LmOperandType::Reg
+    }
+}
+
+impl LmOpImmediate{
     pub fn new_imm_opreand(value: u64) -> LmOperand{
-        LmOperand{
-            value: value,
-            operand_type: LmOperandType::Imm,
-            coprocessor: LmCoprocessor::NoCoprocessor,
-            register: LmRegisters::Zero
-        }
+        LmOperand::LmOpImmediate(LmOpImmediate{
+            value,
+        })
     }
-    pub fn new_reg_opreand(register: LmRegisters, coprocessor: LmCoprocessor) -> LmOperand{
-        LmOperand{
-            value: 0,
-            operand_type: LmOperandType::Reg,
-            coprocessor: coprocessor,
-            register: register
-        }
-    }
-    pub fn get_reg_str(register: LmRegisters, coprocessor: instruction::LmCoprocessor) -> &'static str{
+}
+impl LmOpRegister{
+    fn get_reg_str(register: u8, coprocessor: instruction::LmCoprocessor) -> &'static str{
         static CPU_REGISTER_TABLE: [&str; 32] = [
             LM_REG_ZERO, LM_REG_AT, LM_REG_V0, LM_REG_V1, LM_REG_A0, LM_REG_A1, LM_REG_A2, LM_REG_A3,
             LM_REG_T0, LM_REG_T1, LM_REG_T2, LM_REG_T3, LM_REG_T4, LM_REG_T5, LM_REG_T6, LM_REG_T7,
@@ -73,17 +77,10 @@ impl LmOperand{
             _ => LM_DEFAULT_REG_TABLE[register as usize],
         }
     }
-
-    pub fn _get_operand_type(&self) -> LmOperandType{
-        self.operand_type
-    }
-    pub fn get_register(&self) -> Option<LmRegisters>{
-        if self.operand_type != LmOperandType::Reg{
-            return None
-        }
-        Some(self.register)
-    }
-    pub fn get_coprocessor(&self) -> LmCoprocessor{
-        self.coprocessor
+    pub fn new_reg_opreand(register: u8, coprocessor: LmCoprocessor) -> LmOperand{
+        LmOperand::LmOpRegister(LmOpRegister{
+            coprocessor: coprocessor,
+            register: LmOpRegister::get_reg_str(register, coprocessor),
+        })
     }
 }
