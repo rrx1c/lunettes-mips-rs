@@ -377,7 +377,7 @@ fn special_opcode_map(instruction: &mut LmInstruction) -> Option<LmError>{
 }
 fn regimm_opcode_map(instruction: &mut LmInstruction) -> Option<LmError>{
     let imm_order: usize;
-    let rs: FieldInfos;
+    let rs: Option<FieldInfos>;
     static MENMONICS: [[&str; 8]; 4] =
     [   [LM_MNE_BLTZL,  LM_MNE_BGEZ,  LM_MNE_BLTZL,  LM_MNE_BGEZL,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC],
         [LM_MNE_TGEI,  LM_MNE_TGEIU,  LM_MNE_TLTI,  LM_MNE_TLTIU,  LM_MNE_TEQI,  LM_MNE_NO_MNEMONIC,  LM_MNE_TNEI,  LM_MNE_NO_MNEMONIC],
@@ -389,25 +389,33 @@ fn regimm_opcode_map(instruction: &mut LmInstruction) -> Option<LmError>{
         3 => LmInstructionCategory::MemoryControl,
         1 => {
             instruction.exception = LmInstructionException::LmTrapExcept;
+            instruction.is_conditional = true;
             LmInstructionCategory::Trap
         },
-        _ => LmInstructionCategory::BranchJump,
+        _ => {
+            instruction.is_relative = true;
+            instruction.is_conditional = true;
+            LmInstructionCategory::BranchJump
+        },
     };
 
-    if (instruction.machine_code >> 16 & 0b111111) == 0x11{
-        rs = FieldInfos::default_blank_field();
+    if (instruction.machine_code >> 16 & 0b111111) == 0x11
+    && (instruction.machine_code >> 21 & 0b11111) == 0{
+        instruction.mnemonic = LM_MNE_BAL;
+        rs = None;
         imm_order = 0;
+        instruction.is_conditional = false;
     }
     else if (instruction.machine_code >> 16 & 0b111111) == 0x1f{
         imm_order = 0;
-        rs = FieldInfos::default_reg_field(1, LmCoprocessor::Cpu);
+        rs = Some(FieldInfos::default_reg_field(1, LmCoprocessor::Cpu));
     }
     else{
         imm_order = 1;
-        rs = FieldInfos::default_reg_field(0, LmCoprocessor::Cpu);
+        rs = Some(FieldInfos::default_reg_field(0, LmCoprocessor::Cpu));
     }
 
-    return LmDisassembler::imm_format(instruction, Some(rs), None, FieldInfos::default_imm_field(imm_order))
+    return LmDisassembler::imm_format(instruction, rs, None, FieldInfos::default_imm_field(imm_order))
 }
 fn special2_opcode_map(instruction: &mut LmInstruction) -> Option<LmError>{
     static SPECIAL2_MAP: [fn(&mut LmInstruction) -> Option<LmError>; 64] = 

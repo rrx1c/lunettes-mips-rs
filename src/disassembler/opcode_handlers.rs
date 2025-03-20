@@ -131,7 +131,7 @@ pub fn xori(instruction: &mut LmInstruction) -> Option<LmError>{
 }
 pub fn lui(instruction: &mut LmInstruction) -> Option<LmError>{
     let rt: FieldInfos = FieldInfos::default_reg_field(0, LmCoprocessor::Cpu);    
-    let sa: FieldInfos = FieldInfos::default_imm_field(2);
+    let sa: FieldInfos = FieldInfos::default_imm_field(1);
 
     instruction.mnemonic = LM_MNE_LUI;
     instruction.category = LmInstructionCategory::Logical;
@@ -675,4 +675,3 @@ pub fn rdhwr(instruction: &mut LmInstruction) -> Option<LmError>{
 
     LmDisassembler::reg_format(instruction, Some(FieldInfos::default_blank_field()), Some(rt), Some(rd), Some(FieldInfos::default_blank_field()))
 }
-//Regimm

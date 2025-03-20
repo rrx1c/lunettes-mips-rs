@@ -110,3 +110,4 @@ pub const LM_MNE_BGEZL: &str = "bgezl"; pub const LM_MNE_TGEI: &str = "tgei"; pu
 pub const LM_MNE_TLTI: &str = "tlti"; pub const LM_MNE_TLTIU: &str = "tltiu"; pub const LM_MNE_TEQI: &str = "teqi";
 pub const LM_MNE_TNEI: &str = "tnei"; pub const LM_MNE_BLTZAL: &str = "bltzal"; pub const LM_MNE_BGEZAL: &str = "bgezal";
 pub const LM_MNE_BLTZALL: &str = "bltzall";pub const LM_MNE_BGEZALL: &str = "bgezall"; pub const LM_MNE_SYNCI: &str = "synci";
+pub const LM_MNE_BAL: &str = "bal";
