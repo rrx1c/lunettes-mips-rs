@@ -7,7 +7,7 @@
 mod opcode_handlers;
 
 use core::cmp::Ordering;
-use super::disassembler::opcode_handlers::*;
+use opcode_handlers::*;
 use super::instruction::*;
 use super::LmAddressSize;
 use super::operands::*;

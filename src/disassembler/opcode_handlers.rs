@@ -4,11 +4,11 @@
 //Github profile: https://github.com/RRx1C
 //Link to repo: https://github.com/RRx1C/lunettes-mips-rs
 
-use crate::lm_mips::instruction::*;
-use crate::lm_mips::operands::*;
-use super::registers::*;
-use crate::lm_mips::disassembler::*;
-use crate::lm_mips::disassembler::FieldInfos;
+use crate::instruction::*;
+use crate::operands::*;
+use crate::disassembler::*;
+use registers::*;
+use FieldInfos;
 
 //TODO: Je n'ai pas envie de debugger ce truc
 //TODO: Je dois mettre les bonnes exceptions
@@ -375,7 +375,7 @@ pub fn jr(instruction: &mut LmInstruction) -> Option<LmError>{
     LmDisassembler::reg_format(instruction, Some(rs), None, Some(rd), None)
 }
 pub fn jalr(instruction: &mut LmInstruction) -> Option<LmError>{
-    let rt: FieldInfos = FieldInfos::blank_field(0b1111111111);
+    let rt: FieldInfos = FieldInfos::default_blank_field();
     let rd: FieldInfos = FieldInfos::reg_field(0, LmCoprocessor::Cpu, LmOperandType::Reg);
     let rs: FieldInfos = FieldInfos::reg_field(1, LmCoprocessor::Cpu, LmOperandType::Reg);
     
