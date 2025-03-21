@@ -79,7 +79,7 @@ impl LmOpRegister{
     }
     pub fn new_reg_opreand(register: u8, coprocessor: LmCoprocessor) -> LmOperand{
         LmOperand::LmOpRegister(LmOpRegister{
-            coprocessor: coprocessor,
+            coprocessor,
             register: LmOpRegister::get_reg_str(register, coprocessor),
         })
     }

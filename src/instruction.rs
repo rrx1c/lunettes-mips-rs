@@ -11,7 +11,8 @@ use super::utils::string::LmString;
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum LmInstructionFormat{
     NoFormat, Imm, Reg, Jump, Other,
-    CoditionCodeFpu
+    CoditionCodeFpu, CpxCpuTransfer,
+    Mfmc0, 
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -39,13 +40,14 @@ pub enum LmInstructionVersion{
 #[derive(Clone, Debug, PartialEq)]
 pub enum LmInstructionException{
     NoException = 0, LmIntOverflowExcept = 1, LmTrapExcept = 2,
-    LmReservedException = 4
+    LmReservedInstructionException = 4, LmCoprocessorUnusableException = 8
 }
 
 #[derive(Debug)]
 pub struct LmInstruction{
     pub address: u64,
     pub mnemonic: &'static str,
+    pub opcode: u8,
     pub machine_code: u32,
     pub string: LmString,
     pub category: LmInstructionCategory,
@@ -111,3 +113,10 @@ pub const LM_MNE_TLTI: &str = "tlti"; pub const LM_MNE_TLTIU: &str = "tltiu"; pu
 pub const LM_MNE_TNEI: &str = "tnei"; pub const LM_MNE_BLTZAL: &str = "bltzal"; pub const LM_MNE_BGEZAL: &str = "bgezal";
 pub const LM_MNE_BLTZALL: &str = "bltzall";pub const LM_MNE_BGEZALL: &str = "bgezall"; pub const LM_MNE_SYNCI: &str = "synci";
 pub const LM_MNE_BAL: &str = "bal";
+
+//CP0
+pub const LM_MNE_MFC0: &str = "mfc0"; pub const LM_MNE_MTC0: &str = "mtc0"; pub const LM_MNE_RDPGPR: &str = "rdpgpr";
+pub const LM_MNE_WRPGPR: &str = "wrpgpr"; pub const LM_MNE_DI: &str = "di"; pub const LM_MNE_EI: &str = "ei";
+pub const LM_MNE_TLBR: &str = "tlbr"; pub const LM_MNE_TLBWI: &str = "tlbwi"; pub const LM_MNE_TLBWR: &str = "tlbwr";
+pub const LM_MNE_TLBP: &str = "tlbp"; pub const LM_MNE_ERET: &str = "eret"; pub const LM_MNE_DERET: &str = "deret";
+pub const LM_MNE_WAIT: &str = "wait";

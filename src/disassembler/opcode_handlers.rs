@@ -12,7 +12,7 @@ use FieldInfos;
 
 //TODO: Je n'ai pas envie de debugger ce truc
 //TODO: Je dois mettre les bonnes exceptions
-//TODO: Le triosième opérande de movci est $fccr
+//TODO: Dans le Release1 mfmc0 avait une autre exception, je dois rajouter les versions pour ça
 
 //Opcode handlers
 
@@ -212,7 +212,7 @@ pub fn cpu_loadstore(instruction: &mut LmInstruction) -> Option<LmError>{
     instruction.category = match instruction.machine_code & 1{
         0 => LmInstructionCategory::Load,
         1 => LmInstructionCategory::Store,
-        _ => return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.address, instruction.machine_code))
+        _ => return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.opcode, instruction.address, instruction.machine_code))
     };
 
     return LmDisassembler::imm_format(instruction, Some(base), Some(rt), FieldInfos::default_imm_field(1))
@@ -248,7 +248,7 @@ pub fn sll(instruction: &mut LmInstruction) -> Option<LmError>{
             1 => LM_MNE_SSNOP,
             3 => LM_MNE_EHB,
             5 => LM_MNE_PAUSE,
-            _ => return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.address, instruction.machine_code))
+            _ => return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.opcode, instruction.address, instruction.machine_code))
         };
         rt = FieldInfos::default_blank_field();
         rd = FieldInfos::default_blank_field();
@@ -272,7 +272,7 @@ pub fn movci(instruction: &mut LmInstruction) -> Option<LmError>{
     //Reserved Instruction, Coprocessor Unusable
     if (instruction.machine_code >> 6 & 0b11111) != 0
     ||(instruction.machine_code >> 17 & 1) != 0{
-        return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.address, instruction.machine_code))
+        return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.opcode, instruction.address, instruction.machine_code))
     }
     let mnemonics = [LM_MNE_MOVF, LM_MNE_MOVT];
     let mut hex_num: LmString = LmString::new_lmstring();
@@ -598,7 +598,7 @@ pub fn ext(instruction: &mut LmInstruction) -> Option<LmError>{
 
     instruction.mnemonic = LM_MNE_EXT;
     instruction.category = LmInstructionCategory::InsertExtract;
-    instruction.exception = LmInstructionException::LmReservedException;
+    instruction.exception = LmInstructionException::LmReservedInstructionException;
 
     let success = LmDisassembler::reg_format(instruction, Some(rs), Some(rt), None, None);
 
@@ -625,7 +625,7 @@ pub fn ins(instruction: &mut LmInstruction) -> Option<LmError>{
 
     instruction.mnemonic = LM_MNE_INS;
     instruction.category = LmInstructionCategory::InsertExtract;
-    instruction.exception = LmInstructionException::LmReservedException;
+    instruction.exception = LmInstructionException::LmReservedInstructionException;
 
     let success = LmDisassembler::reg_format(instruction, Some(rs), Some(rt), None, None);
 
@@ -661,7 +661,7 @@ pub fn bshfl(instruction: &mut LmInstruction) -> Option<LmError>{
         0b11000 => {
             instruction.category = LmInstructionCategory::Arithmetic;
             LM_MNE_SEH},
-        _ => return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.address, instruction.machine_code))
+        _ => return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.opcode, instruction.address, instruction.machine_code))
     };
     
     LmDisassembler::reg_format(instruction, Some(FieldInfos::default_blank_field()), Some(rt), Some(rd), Some(FieldInfos::default_blank_field()))
@@ -674,4 +674,79 @@ pub fn rdhwr(instruction: &mut LmInstruction) -> Option<LmError>{
     instruction.mnemonic = LM_MNE_RDHWR;
 
     LmDisassembler::reg_format(instruction, Some(FieldInfos::default_blank_field()), Some(rt), Some(rd), Some(FieldInfos::default_blank_field()))
+}
+
+//CP0
+pub fn mov_cp0(instruction: &mut LmInstruction) -> Option<LmError>{
+    let mnemonics = [LM_MNE_MFC0, LM_MNE_MTC0];
+    if (instruction.machine_code >> 3 & 0b11111111) != 0{
+        return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.opcode, instruction.address, instruction.machine_code))
+    }
+
+    instruction.category = LmInstructionCategory::Priviledge;
+    instruction.format = LmInstructionFormat::Other;
+    instruction.mnemonic = mnemonics[(instruction.machine_code >> 23 & 1) as usize];
+    instruction.operand_num = 3;
+
+    instruction.operand[0] = Some(LmOpRegister::new_reg_opreand((instruction.machine_code >> 16 & 0b11111) as u8, LmCoprocessor::Cpu));
+    instruction.operand[1] = Some(LmOpRegister::new_reg_opreand((instruction.machine_code >> 11 & 0b11111) as u8, LmCoprocessor::Cpu));
+    instruction.operand[2] = Some(LmOpImmediate::new_imm_opreand((instruction.machine_code & 7) as u64));
+
+    LmDisassembler::basic_str_format(instruction);
+
+    None
+}
+pub fn gpr_shadowset(instruction: &mut LmInstruction) -> Option<LmError>{
+    let mnemonics = [LM_MNE_RDPGPR, LM_MNE_WRPGPR];
+
+    instruction.category = LmInstructionCategory::Priviledge;
+    instruction.mnemonic = mnemonics[(instruction.machine_code >> 23 & 1) as usize];
+    LmDisassembler::cpx_cpu_transfer_format(instruction, FieldInfos::default_reg_field(1, LmCoprocessor::Cpu), FieldInfos::default_reg_field(0, LmCoprocessor::Cpu))
+}
+pub fn mfmc0(instruction: &mut LmInstruction) -> Option<LmError>{
+    let mnemonics = [LM_MNE_DI, LM_MNE_EI];
+
+    if instruction.machine_code & 0b11111 != 0 ||
+    (instruction.machine_code >> 6 & 0b11111) != 0 || 
+    (instruction.machine_code >> 11 & 0b01100) != 0b01100 {
+        return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.opcode, instruction.address, instruction.machine_code))
+    }
+    
+    instruction.exception = LmInstructionException::LmCoprocessorUnusableException;
+    instruction.category = LmInstructionCategory::Priviledge;
+    instruction.format = LmInstructionFormat::Mfmc0;
+    instruction.mnemonic = mnemonics[(instruction.machine_code >> 5 & 1) as usize];
+    instruction.operand_num = 1;
+    instruction.operand[0] = Some(LmOpRegister::new_reg_opreand((instruction.machine_code >> 16 & 0b11111) as u8, LmCoprocessor::Cpu));
+
+    instruction.string.append_str(instruction.mnemonic);
+    instruction.string.append_char(' ');
+    if let Some(LmOperand::LmOpRegister(reg)) = instruction.operand[0]{
+        instruction.string.append_str(reg.register);
+    }
+    None
+}
+pub fn c0(instruction: &mut LmInstruction) -> Option<LmError>{
+    let mnemonics: [[&str; 8]; 8] = [
+        [LM_MNE_NO_MNEMONIC,  LM_MNE_TLBR,  LM_MNE_TLBWI,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_TLBWR,  LM_MNE_NO_MNEMONIC],
+        [LM_MNE_TLBP,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC],
+        [LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC],
+        [LM_MNE_ERET,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_DERET], 
+        [LM_MNE_WAIT,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_SYNCI],
+        [LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_SYNCI],
+        [LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_SYNCI],
+        [LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_NO_MNEMONIC,  LM_MNE_SYNCI]
+    ];
+    if (instruction.machine_code >> 6 & 0b1111111111111111111) != 0 ||
+    (instruction.machine_code >> 25 & 1) != 1{
+        return Some(LmError::throw_error(LmErrorCode::FieldBadValue, instruction.opcode, instruction.address, instruction.machine_code))
+    }
+
+    instruction.category = LmInstructionCategory::Priviledge;
+    instruction.format = LmInstructionFormat::Other;
+    instruction.mnemonic = mnemonics[(instruction.machine_code >> 3 & 0b111) as usize][(instruction.machine_code & 0b111) as usize];
+    instruction.string.append_str(instruction.mnemonic);
+
+    assert_ne!(instruction.mnemonic.cmp(LM_MNE_NO_MNEMONIC), Ordering::Equal);
+    None
 }
