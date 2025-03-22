@@ -4,7 +4,6 @@
 //Github profile: https://github.com/RRx1C
 //Link to repo: https://github.com/RRx1C/lunettes-mips-rs
 
-// mod lunettes_mips_rs;
 use lunettes_mips_rs::*;
 use lunettes_mips_rs::disassembler::LmDisassembler;
 
