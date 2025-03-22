@@ -503,7 +503,7 @@ impl LmDisassembler{
 
         instruction.category = LmInstructionCategory::BranchJump;
 
-        if (instruction.machine_code >> 6 & 0b11111) == 0b10000{
+        if (instruction.machine_code >> 6 & 0b10000) != 0{
             instruction.mnemonic = LM_MNE_JRHB;
         }
         else{
@@ -519,7 +519,7 @@ impl LmDisassembler{
         
         instruction.category = LmInstructionCategory::BranchJump;
 
-        if (instruction.machine_code >> 6 & 0b11111) == 0b10000{
+        if (instruction.machine_code >> 6 & 0b10000) != 0{
             instruction.mnemonic = LM_MNE_JALRHB
         }
         else{
