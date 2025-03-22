@@ -27,8 +27,8 @@ fn main() {
         match disassembler.disassemble(machine_codes[i], (0x00400000 + i * 4) as u64){
             Ok(instruction) => {
                 let instruction_machine_code = machine_codes[i].to_le_bytes();
-                let str: String = String::from_iter(instruction.string.data());
-                println!("0x{:08x}  {:02x} {:02x} {:02x} {:02x}  {}", instruction.address, 
+                let str: String = String::from_iter(instruction.get_string());
+                println!("0x{:08x}  {:02x} {:02x} {:02x} {:02x}  {}", instruction.get_address(), 
                     instruction_machine_code[0], instruction_machine_code[1], instruction_machine_code[2], instruction_machine_code[3],
                     str);
             },

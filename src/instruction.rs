@@ -6,18 +6,19 @@
 
 use super::LmAddressSize;
 use super::operands::*;
+use super::error::*;
 use super::utils::string::LmString;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum LmInstructionFormat{
-    NoFormat, Imm, Reg, Jump, Other,
+    Imm, Reg, Jump, Other,
     CoditionCodeFpu, CpxCpuTransfer,
     Mfmc0, 
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum LmInstructionCategory{
-    NoFunction, BranchJump, Load,
+    BranchJump, Load,
     Store, Move, Priviledge,
     Logical, Arithmetic, Control,
     Trap, MemoryControl, _Ejtag,
@@ -26,44 +27,111 @@ pub enum LmInstructionCategory{
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum LmCoprocessor{
-    NoCoprocessor,
     Cpu, Cp0, Cp1, Cp2, Cp1x
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum LmInstructionVersion{
-    NoVersion, 
-    _Mips32, _Mips32R2,
-    _Mips64, _Mips64R2
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum LmInstructionException{
-    NoException = 0, LmIntOverflowExcept = 1, LmTrapExcept = 2,
-    LmReservedInstructionException = 4, LmCoprocessorUnusableException = 8
-}
-
 #[derive(Debug)]
-pub struct LmInstruction{
+pub (crate) struct LmInstructionContext{
     pub address: u64,
-    pub mnemonic: &'static str,
+    pub mnemonic: Option<&'static str>,
     pub opcode: u8,
     pub machine_code: u32,
     pub string: LmString,
-    pub category: LmInstructionCategory,
-    pub format: LmInstructionFormat,
-    pub exception: LmInstructionException,
+    pub category: Option<LmInstructionCategory>,
+    pub format: Option<LmInstructionFormat>,
     pub address_size: LmAddressSize,
-    pub coprocessor: LmCoprocessor,
+    pub coprocessor: Option<LmCoprocessor>,
     pub is_conditional: bool,
     pub is_relative: bool,
     pub is_region: bool,
     pub operand_num: usize,
     pub operand: [Option<LmOperand>; 4],    //L'ordre des opérandes suit celui du format en chaîne de caractères 
-    pub version: LmInstructionVersion,
 }
 
-pub const LM_MNE_NO_MNEMONIC: &str = "no mnemonic"; pub const LM_MNE_J: &str = "j"; pub const LM_MNE_JAL: &str = "jal";
+#[derive(Debug)]
+pub struct LmInstruction{
+    address: u64,
+    mnemonic: &'static str,
+    opcode: u8,
+    machine_code: u32,
+    string: LmString,
+    category: LmInstructionCategory,
+    format: LmInstructionFormat,
+    address_size: LmAddressSize,
+    coprocessor: LmCoprocessor,
+    is_conditional: bool,
+    is_relative: bool,
+    is_region: bool,
+    operand_num: usize,
+    _operand: [Option<LmOperand>; 4],    //L'ordre des opérandes suit celui du format en chaîne de caractères 
+}
+impl LmInstruction{
+    pub (crate) fn new_instruction(context: LmInstructionContext) -> Result<LmInstruction, LmError>{
+        let (Some(category), Some(format)) = (context.category, context.format) else{
+            return Err(LmError::throw_error(LmErrorCode::DevError, context.opcode, context.address, context.machine_code))
+        };
+        let (Some(coprocessor), Some(mnemonic)) = (context.coprocessor, context.mnemonic) else{
+            return Err(LmError::throw_error(LmErrorCode::DevError, context.opcode, context.address, context.machine_code))
+        };
+        Ok(LmInstruction{
+            address: context.address,
+            opcode: context.opcode,
+            machine_code: context.machine_code,
+            mnemonic,
+            string: context.string,
+            category,
+            format,
+            address_size: context.address_size,
+            coprocessor,
+            is_conditional: context.is_conditional,
+            is_relative: context.is_relative,
+            is_region: context.is_region,
+            operand_num: context.operand_num,
+            _operand: context.operand
+        })
+    }
+    pub fn is_region(&self) -> bool{
+        self.is_region
+    }
+    pub fn is_relative(&self) -> bool{
+        self.is_relative
+    }
+    pub fn is_conditional(&self) -> bool{
+        self.is_conditional
+    }
+    pub fn get_operand_num(&self) -> usize{
+        self.operand_num
+    }
+    pub fn get_coprocessor(&self) -> LmCoprocessor{
+        self.coprocessor
+    }
+    pub fn get_address(&self) -> u64{
+        self.address
+    }
+    pub fn get_address_size(&self) -> LmAddressSize{
+        self.address_size
+    }
+    pub fn get_category(&self) -> LmInstructionCategory{
+        self.category
+    }
+    pub fn get_format(&self) -> LmInstructionFormat{
+        self.format
+    }
+    pub fn get_mnemonic(&self) -> &str{
+        self.mnemonic
+    }
+    pub fn get_string(&self) -> &[char]{
+        self.string.data()
+    }
+    pub fn get_machine_code(&self) -> u32{
+        self.machine_code
+    }
+    pub fn get_opcode(&self) -> u8{
+        self.opcode
+    }
+}
+
+pub const LM_MNE_J: &str = "j"; pub const LM_MNE_JAL: &str = "jal";
 pub const LM_MNE_BEQ: &str = "beq"; pub const LM_MNE_BNE: &str = "bne"; pub const LM_MNE_BLEZ: &str = "blez";
 pub const LM_MNE_BGTZ: &str = "bgtz"; pub const LM_MNE_ADDI: &str = "addi"; pub const LM_MNE_ADDIU: &str = "addiu";
 pub const LM_MNE_SLTI: &str = "slti"; pub const LM_MNE_SLTIU: &str = "sltiu"; pub const LM_MNE_ANDI: &str = "andi";
