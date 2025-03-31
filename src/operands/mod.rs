@@ -16,31 +16,17 @@ pub enum LmOperandType{
 
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct LmOpRegister{
-    pub register: &'static str,
-    pub coprocessor: LmCoprocessor,
+    register: &'static str,
+    coprocessor: LmCoprocessor,
 }
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct LmOpImmediate{
-    pub value: u64,
+    value: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub enum LmOperand{
     LmOpRegister(LmOpRegister), LmOpImmediate(LmOpImmediate)
-}
-trait _LmOpType{
-    fn get_operand_type() -> LmOperandType;
-}
-
-impl _LmOpType for LmOpImmediate{
-    fn get_operand_type() -> LmOperandType{
-        LmOperandType::Imm
-    }
-}
-impl _LmOpType for LmOpRegister{
-    fn get_operand_type() -> LmOperandType{
-        LmOperandType::Reg
-    }
 }
 
 impl LmOpImmediate{
@@ -48,6 +34,9 @@ impl LmOpImmediate{
         LmOperand::LmOpImmediate(LmOpImmediate{
             value,
         })
+    }
+    pub fn get_value(&self) -> u64{
+        self.value
     }
 }
 impl LmOpRegister{
@@ -83,4 +72,17 @@ impl LmOpRegister{
             register: LmOpRegister::get_reg_str(register, coprocessor),
         })
     }
+    pub fn new_reg_operand_str(reg_str: &'static str, coprocessor: instruction::LmCoprocessor) -> LmOperand{
+        LmOperand::LmOpRegister(LmOpRegister{
+            coprocessor,
+            register: reg_str,
+        })
+    }
+    pub fn get_register(&self) -> &'static str{
+        self.register
+    }
+    pub fn get_coprocessor(&self) -> LmCoprocessor{
+        self.coprocessor
+    }
+
 }

@@ -418,7 +418,7 @@ impl LmDisassembler{
         context.operand_num = 3;
         context.operand[0] = Some(LmOpRegister::new_reg_opreand((context.machine_code >> 11 & 0b11111) as u8, LmCoprocessor::Cpu));
         context.operand[1] = Some(LmOpRegister::new_reg_opreand((context.machine_code >> 21 & 0b11111) as u8, LmCoprocessor::Cpu));
-        context.operand[2] = Some(LmOperand::LmOpRegister(LmOpRegister{register: registers[(context.machine_code >> 18 & 0b111) as usize], coprocessor: LmCoprocessor::Cp1}));
+        context.operand[2] = Some(LmOpRegister::new_reg_operand_str(registers[(context.machine_code >> 18 & 0b111) as usize], LmCoprocessor::Cp1));
 
         if let Some(mne) = context.mnemonic{
             context.string.append_str(mne);
@@ -427,9 +427,9 @@ impl LmDisassembler{
         for i in 0..context.operand_num{
             if let Some(op) = context.operand[i]{
                 match op{
-                    LmOperand::LmOpRegister(reg) => _= context.string.append_str(reg.register),
+                    LmOperand::LmOpRegister(reg) => _= context.string.append_str(reg.get_register()),
                     LmOperand::LmOpImmediate(imm) => {
-                        hex_num.num_to_str(imm.value);
+                        hex_num.num_to_str(imm.get_value());
                         context.string.append_string(&hex_num);
                     },
                 };
@@ -553,7 +553,7 @@ impl LmDisassembler{
         context.operand[0] = Some(LmOpImmediate::new_imm_opreand(((context.machine_code >> 6) & 0xFFFFF) as u64));
 
         if let Some(LmOperand::LmOpImmediate(imm)) = context.operand[0]{
-            hex_num.num_to_str(imm.value);
+            hex_num.num_to_str(imm.get_value());
         };
         if let Some(mne) = context.mnemonic{
             context.string.append_str(mne);
@@ -713,7 +713,7 @@ impl LmDisassembler{
         context.operand[0] = Some(LmOpImmediate::new_imm_opreand(((context.machine_code >> 6) & 0xFFFFF) as u64));
 
         if let Some(LmOperand::LmOpImmediate(imm)) = context.operand[0]{
-            hex_num.num_to_str(imm.value);
+            hex_num.num_to_str(imm.get_value());
         };
         if let Some(mne) = context.mnemonic{
             context.string.append_str(mne);
@@ -740,12 +740,12 @@ impl LmDisassembler{
         
         context.string.append_str(", ");
         if let Some(LmOperand::LmOpImmediate(imm)) = context.operand[2]{
-            hex_num.num_to_str(imm.value);
+            hex_num.num_to_str(imm.get_value());
             context.string.append_string(&hex_num);
         }
         context.string.append_str(", ");
         if let Some(LmOperand::LmOpImmediate(imm)) = context.operand[3]{
-            hex_num.num_to_str(imm.value);
+            hex_num.num_to_str(imm.get_value());
             context.string.append_string(&hex_num);
         }
         return success
@@ -767,13 +767,13 @@ impl LmDisassembler{
         context.string.append_str(", ");
         if let Some(LmOperand::LmOpImmediate(imm)) = context.operand[3]{
             if let Some(LmOperand::LmOpImmediate(imm1)) = context.operand[2]{
-                hex_num.num_to_str(imm.value - imm1.value + 1);
+                hex_num.num_to_str(imm.get_value() - imm1.get_value() + 1);
                 context.string.append_string(&hex_num);
             }
         }
         context.string.append_str(", ");
         if let Some(LmOperand::LmOpImmediate(imm)) = context.operand[3]{
-            hex_num.num_to_str(imm.value);
+            hex_num.num_to_str(imm.get_value());
             context.string.append_string(&hex_num);
         }
         return success
@@ -851,7 +851,7 @@ impl LmDisassembler{
             context.string.append_str(mne);
             context.string.append_char(' ');
             if let Some(LmOperand::LmOpRegister(reg)) = context.operand[0]{
-                context.string.append_str(reg.register);
+                context.string.append_str(reg.get_register());
             }
         }
         Ok(())

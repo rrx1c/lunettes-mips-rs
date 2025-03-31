@@ -236,10 +236,10 @@ impl LmDisassembler{
         instruction.string.append_char(' ');
         for i in 0..instruction.operand_num{
             if let Some(LmOperand::LmOpRegister(reg)) = instruction.operand[i]{
-                instruction.string.append_str(reg.register);
+                instruction.string.append_str(reg.get_register());
             }
             else if let Some(LmOperand::LmOpImmediate(imm)) = instruction.operand[i]{
-                hex_num.num_to_str(imm.value);
+                hex_num.num_to_str(imm.get_value());
                 instruction.string.append_string(&hex_num);
             }
 
@@ -260,10 +260,10 @@ impl LmDisassembler{
         instruction.string.append_char(' ');
         for i in 0..instruction.operand_num{
             if let Some(LmOperand::LmOpRegister(reg)) = instruction.operand[i]{
-                instruction.string.append_str(reg.register);
+                instruction.string.append_str(reg.get_register());
             }
             else if let Some(LmOperand::LmOpImmediate(imm)) = instruction.operand[i]{
-                hex_num.num_to_str(imm.value);
+                hex_num.num_to_str(imm.get_value());
                 instruction.string.append_string(&hex_num);
             }
 
@@ -367,10 +367,10 @@ impl LmDisassembler{
         instruction.string.append_char(' ');
         for i in 0..instruction.operand_num{
             if let Some(LmOperand::LmOpRegister(reg)) = instruction.operand[i]{
-                instruction.string.append_str(reg.register);
+                instruction.string.append_str(reg.get_register());
             }
             else if let Some(LmOperand::LmOpImmediate(imm)) = instruction.operand[i]{
-                hex_num.num_to_str(imm.value);
+                hex_num.num_to_str(imm.get_value());
                 instruction.string.append_string(&hex_num);
             }
 
@@ -391,10 +391,10 @@ impl LmDisassembler{
         instruction.string.append_char(' ');
         for i in 0..instruction.operand_num - 1{
             if let Some(LmOperand::LmOpRegister(reg)) = instruction.operand[i]{
-                instruction.string.append_str(reg.register);
+                instruction.string.append_str(reg.get_register());
             }
             else if let Some(LmOperand::LmOpImmediate(imm)) = instruction.operand[i]{
-                hex_num.num_to_str(imm.value);
+                hex_num.num_to_str(imm.get_value());
                 instruction.string.append_string(&hex_num);
             }
             if instruction.operand_num - 2 > i{
@@ -403,7 +403,7 @@ impl LmDisassembler{
         }
         instruction.string.append_char('(');
         if let Some(LmOperand::LmOpRegister(reg)) = instruction.operand[instruction.operand_num - 1]{
-            instruction.string.append_str(reg.register);
+            instruction.string.append_str(reg.get_register());
         }
         instruction.string.append_char(')');
         Ok(())
@@ -424,7 +424,7 @@ impl LmDisassembler{
             return Err(LmError::throw_error(LmErrorCode::DevError, instruction.opcode, instruction.address, instruction.machine_code))
         };
         instruction.string.append_str(mne);
-        hex_num.num_to_str(imm.value * 0x4 + instruction.address);
+        hex_num.num_to_str(imm.get_value() * 0x4 + instruction.address);
         instruction.string.append_char(' ');
         instruction.string.append_string(&hex_num);
 

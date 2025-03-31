@@ -63,7 +63,7 @@ pub struct LmInstruction{
     is_relative: bool,
     is_region: bool,
     operand_num: usize,
-    _operand: [Option<LmOperand>; 4],    //L'ordre des opérandes suit celui du format en chaîne de caractères 
+    operand: [Option<LmOperand>; 4],    //L'ordre des opérandes suit celui du format en chaîne de caractères 
 }
 impl LmInstruction{
     pub (crate) fn new_instruction(context: LmInstructionContext) -> Result<LmInstruction, LmError>{
@@ -87,7 +87,7 @@ impl LmInstruction{
             is_relative: context.is_relative,
             is_region: context.is_region,
             operand_num: context.operand_num,
-            _operand: context.operand
+            operand: context.operand
         })
     }
     pub fn is_region(&self) -> bool{
@@ -128,6 +128,9 @@ impl LmInstruction{
     }
     pub fn get_opcode(&self) -> u8{
         self.opcode
+    }
+    pub fn get_operand(&self, index: usize) -> Option<LmOperand>{
+        self.operand[index]
     }
 }
 
