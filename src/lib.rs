@@ -12,6 +12,14 @@ pub mod error;
 mod utils;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub enum LmAddressSize{
-    Lm32bits = 4, _Lm64ibts = 8
+pub enum LmMips32{
+    LmR1, LmR2
+}
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum LmMips64{
+    LmR1, LmR2
+}
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum LmMipsVersion{
+    Lm32(LmMips32), Lm64(LmMips64)
 }

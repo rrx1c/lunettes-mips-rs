@@ -4,7 +4,8 @@
 //Github profile: https://github.com/RRx1C
 //Link to repo: https://github.com/RRx1C/lunettes-mips-rs
 
-use super::LmAddressSize;
+use super::LmMipsVersion;
+
 use super::operands::*;
 use super::error::*;
 use super::utils::string::LmString;
@@ -39,7 +40,7 @@ pub (crate) struct LmInstructionContext{
     pub string: LmString,
     pub category: Option<LmInstructionCategory>,
     pub format: Option<LmInstructionFormat>,
-    pub address_size: LmAddressSize,
+    pub version: Option<LmMipsVersion>,
     pub coprocessor: Option<LmCoprocessor>,
     pub is_conditional: bool,
     pub is_relative: bool,
@@ -57,7 +58,7 @@ pub struct LmInstruction{
     string: LmString,
     category: LmInstructionCategory,
     format: LmInstructionFormat,
-    address_size: LmAddressSize,
+    version: LmMipsVersion,
     coprocessor: LmCoprocessor,
     is_conditional: bool,
     is_relative: bool,
@@ -73,6 +74,9 @@ impl LmInstruction{
         let (Some(coprocessor), Some(mnemonic)) = (context.coprocessor, context.mnemonic) else{
             return Err(LmError::throw_error(LmErrorCode::DevError, context.opcode, context.address, context.machine_code))
         };
+        let Some(version) = context.version else{
+            return Err(LmError::throw_error(LmErrorCode::DevError, context.opcode, context.address, context.machine_code))
+        };
         Ok(LmInstruction{
             address: context.address,
             opcode: context.opcode,
@@ -81,7 +85,7 @@ impl LmInstruction{
             string: context.string,
             category,
             format,
-            address_size: context.address_size,
+            version,
             coprocessor,
             is_conditional: context.is_conditional,
             is_relative: context.is_relative,
@@ -108,8 +112,8 @@ impl LmInstruction{
     pub fn get_address(&self) -> u64{
         self.address
     }
-    pub fn get_address_size(&self) -> LmAddressSize{
-        self.address_size
+    pub fn get_version(&self) -> LmMipsVersion{
+        self.version
     }
     pub fn get_category(&self) -> LmInstructionCategory{
         self.category

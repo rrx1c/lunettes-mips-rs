@@ -8,15 +8,16 @@ mod opcode_handlers;
 
 use core::cmp::Ordering;
 
+use crate::LmMipsVersion;
+
 use super::instruction::*;
-use super::LmAddressSize;
 use super::operands::*;
 use super::utils::string::*;
 use super::error::*;
 
 #[derive(Debug, Copy, Clone)]
 pub struct LmDisassembler{
-    pub address_size: LmAddressSize,
+    pub version: LmMipsVersion,
 }
 
 struct FieldInfos{
@@ -71,13 +72,12 @@ impl FieldInfos{
             operand_order: 4
         }
     }
-
 }
 
 impl LmDisassembler{
-    pub fn new_disassembler(address_size: LmAddressSize) -> LmDisassembler{
+    pub fn new_disassembler(version: LmMipsVersion) -> LmDisassembler{
         LmDisassembler{
-            address_size,
+            version,
         }
     }
     //Opcode handlers map
@@ -93,7 +93,7 @@ impl LmDisassembler{
             LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cache_pref,  LmDisassembler::no_instructions, LmDisassembler::cpu_loadstore, LmDisassembler::cpu_loadstore,  LmDisassembler::no_instructions,
             LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::no_instructions,  LmDisassembler::no_instructions,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::no_instructions];
 
-        let mut instruction: LmInstructionContext = LmInstructionContext{
+        let mut context: LmInstructionContext = LmInstructionContext{
             category: None,
             format: None,
             operand_num: 0,
@@ -113,13 +113,13 @@ impl LmDisassembler{
             string: LmString::new_lmstring(),
             mnemonic: None,
             address,
-            address_size: self.address_size,
+            version: None,
         };
         
-        return match OPCODE_MAP[(memory >> 26) as usize](self, &mut instruction) {
+        return match OPCODE_MAP[(memory >> 26) as usize](self, &mut context) {
             Err(e) => Err(e),
             Ok(()) => {
-                match LmInstruction::new_instruction(instruction){
+                match LmInstruction::new_instruction(context){
                     Ok(i) => Ok(i),
                     Err(e) => return Err(e),
                 }

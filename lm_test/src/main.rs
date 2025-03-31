@@ -8,7 +8,7 @@ use lunettes_mips_rs::*;
 use lunettes_mips_rs::disassembler::LmDisassembler;
 
 fn main() {
-    let disassembler: LmDisassembler = LmDisassembler::new_disassembler(LmAddressSize::Lm32bits);
+    let disassembler: LmDisassembler = LmDisassembler{version: LmMipsVersion::Lm32(LmMips32::LmR2)};
     let machine_codes = [
         0x08010008, 0x0C104000, 0x11090010, 0x16110020, 0x18A00030, 0x1CA80040, 0x214A0010, 0x25520020,
         0x29940005, 0x2DD60006, 0x31EF00FF, 0x35F6ABCD, 0x39981234, 0x3C065678, 0x51090050, 0x56110060, 
