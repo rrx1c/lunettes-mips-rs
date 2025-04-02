@@ -52,8 +52,8 @@ pub (crate) struct LmInstructionContext{
 pub struct LmInstruction{
     address: u64,
     mnemonic: &'static str,
-    opcode: u8,
     machine_code: u32,
+    opcode: u8,
     string: LmString,
     category: LmInstructionCategory,
     format: LmInstructionFormat,
@@ -191,3 +191,7 @@ pub const LM_MNE_WRPGPR: &str = "wrpgpr"; pub const LM_MNE_DI: &str = "di"; pub 
 pub const LM_MNE_TLBR: &str = "tlbr"; pub const LM_MNE_TLBWI: &str = "tlbwi"; pub const LM_MNE_TLBWR: &str = "tlbwr";
 pub const LM_MNE_TLBP: &str = "tlbp"; pub const LM_MNE_ERET: &str = "eret"; pub const LM_MNE_DERET: &str = "deret";
 pub const LM_MNE_WAIT: &str = "wait";
+
+//PCREL
+pub const LM_MNE_ADDIUPC: &str = "addiupc"; pub const LM_MNE_LWPC: &str = "lwpc"; pub const LM_MNE_LDPC: &str = "ldpc";
+pub const LM_MNE_AUIPC: &str = "auipc"; pub const LM_MNE_ALUIPC: &str = "aluipc"; pub const LM_MNE_LWUPC: &str = "lwupc";

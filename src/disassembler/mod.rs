@@ -91,7 +91,7 @@ impl LmDisassembler{
             LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::no_instructions,
             LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::no_instructions,  LmDisassembler::no_instructions,  LmDisassembler::cpu_loadstore,  LmDisassembler::cache_pref,
             LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cache_pref,  LmDisassembler::no_instructions, LmDisassembler::cpu_loadstore, LmDisassembler::cpu_loadstore,  LmDisassembler::no_instructions,
-            LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::no_instructions,  LmDisassembler::no_instructions,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::no_instructions];
+            LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::pcrel_opcode_map,  LmDisassembler::no_instructions,  LmDisassembler::cpu_loadstore,  LmDisassembler::cpu_loadstore,  LmDisassembler::no_instructions];
 
         let mut instruction: LmInstructionContext = LmInstructionContext{
             category: None,

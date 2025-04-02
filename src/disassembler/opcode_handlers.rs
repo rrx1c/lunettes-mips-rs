@@ -150,6 +150,23 @@ impl LmDisassembler{
         // context.coprocessor = LmCoprocessor::Cp1x;
         // _COP1X_MAP[(context.machine_code >> 26) as usize](context)
     }
+    pub (super) fn pcrel_opcode_map(&self, context: &mut LmInstructionContext) -> Result<(), LmError>{
+        static PCREL_MAP: [fn(disassembler: &LmDisassembler, &mut LmInstructionContext) -> Result<(), LmError>; 32] =[   
+            LmDisassembler::addiupc,  LmDisassembler::addiupc,  LmDisassembler::lwpc,  LmDisassembler::lwpc,  LmDisassembler::lwupc,  LmDisassembler::lwupc,  LmDisassembler::ldpc,  LmDisassembler::no_instructions,
+            LmDisassembler::addiupc,  LmDisassembler::addiupc,  LmDisassembler::lwpc,  LmDisassembler::lwpc,  LmDisassembler::lwupc,  LmDisassembler::lwupc,  LmDisassembler::ldpc,  LmDisassembler::no_instructions,
+            LmDisassembler::addiupc,  LmDisassembler::addiupc,  LmDisassembler::lwpc,  LmDisassembler::lwpc,  LmDisassembler::lwupc,  LmDisassembler::lwupc,  LmDisassembler::ldpc,  LmDisassembler::auipc,
+            LmDisassembler::addiupc,  LmDisassembler::addiupc,  LmDisassembler::lwpc,  LmDisassembler::lwpc,  LmDisassembler::lwupc,  LmDisassembler::lwupc,  LmDisassembler::ldpc,  LmDisassembler::aluipc
+        ];
+
+        context.is_relative = true;
+        context.format = Some(LmInstructionFormat::Imm);
+        let imm = FieldInfos::imm_field(1, 0b1111111111111111);
+        let rs = Some(FieldInfos::default_reg_field(0, LmCoprocessor::Cpu));
+        if let Err(e) = PCREL_MAP[(context.machine_code >> 16 & 0b11111) as usize](self, context){
+            return Err(e)
+        }
+        self.imm_format(context, rs, None, imm)
+    }
 
     //Opcode handlers
 
@@ -881,6 +898,38 @@ impl LmDisassembler{
         context.string.append_str(mne);
 
         assert_ne!(context.mnemonic, None);
+        Ok(())
+    }
+
+    //pcrel
+    pub (super) fn addiupc(&self, context: &mut LmInstructionContext) -> Result<(), LmError>{
+        context.mnemonic = Some(LM_MNE_ADDIUPC);
+        context.category = Some(LmInstructionCategory::Arithmetic);
+        Ok(())
+    }
+    pub (super) fn lwpc(&self, context: &mut LmInstructionContext) -> Result<(), LmError>{
+        context.mnemonic = Some(LM_MNE_LWPC);
+        context.category = Some(LmInstructionCategory::Load);
+        Ok(())
+    }
+    pub (super) fn lwupc(&self, context: &mut LmInstructionContext) -> Result<(), LmError>{
+        context.mnemonic = Some(LM_MNE_LWUPC);
+        context.category = Some(LmInstructionCategory::Load);
+        Ok(())
+    }
+    pub (super) fn aluipc(&self, context: &mut LmInstructionContext) -> Result<(), LmError>{
+        context.mnemonic = Some(LM_MNE_ALUIPC);
+        context.category = Some(LmInstructionCategory::Logical);
+        Ok(())
+    }
+    pub (super) fn ldpc(&self, context: &mut LmInstructionContext) -> Result<(), LmError>{
+        context.mnemonic = Some(LM_MNE_LDPC);
+        context.category = Some(LmInstructionCategory::Load);
+        Ok(())
+    }
+    pub (super) fn auipc(&self, context: &mut LmInstructionContext) -> Result<(), LmError>{
+        context.mnemonic = Some(LM_MNE_AUIPC);
+        context.category = Some(LmInstructionCategory::Logical);
         Ok(())
     }
 }
